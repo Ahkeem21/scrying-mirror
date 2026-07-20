@@ -1,0 +1,370 @@
+/* ── The Pareidolia Scrying Mirror ───────────────────────────── */
+
+:root {
+  --bg: #0a0a0c;
+  --text: #9a938a;
+  --text-dim: #5c5750;
+  --bronze: #6e5b3e;
+  --bronze-dim: #3d3425;
+  --verdigris: #4a5d55;
+  --gold: #c9a24b;
+  --slow: 1.5s;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  overflow: hidden;
+}
+
+body.hide-cursor, body.hide-cursor * { cursor: none !important; }
+
+#stage {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2vh 0;
+}
+
+/* fixed-height region below the mirror so panel swaps never shift it */
+#below {
+  height: clamp(230px, 32vh, 340px);
+  flex: none;
+  display: grid;              /* both panels share the same cell */
+  justify-items: center;
+  align-items: start;
+  overflow: visible;
+}
+
+#below > .panel { grid-area: 1 / 1; }
+
+/* ── mirror ─────────────────────────────────────────────────── */
+
+#mirror-wrap {
+  position: relative;
+  width: min(60vmin, 92vw, calc(96vh - clamp(230px, 32vh, 340px)), 600px);
+  aspect-ratio: 1;
+  flex: none;
+}
+
+#mirror {
+  position: absolute;
+  inset: 2.5%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #000;
+  /* thin double ring */
+  box-shadow:
+    0 0 0 1px var(--bronze-dim),
+    0 0 0 6px var(--bg),
+    0 0 0 7px rgba(110, 91, 62, 0.45),
+    0 0 60px rgba(0, 0, 0, 0.9);
+  transition: filter 3s ease;
+  filter: brightness(0.55);
+}
+
+#mirror.awake { filter: brightness(1); }
+
+#mirror::after {
+  /* heavy vignette — edges fall to black */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 12vmin 4vmin rgba(0, 0, 0, 0.95),
+    inset 0 0 24vmin 8vmin rgba(0, 0, 0, 0.55);
+  z-index: 5;
+}
+
+#mirror video, #mirror canvas, #veil {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#surface { z-index: 1; }
+#ink     { z-index: 2; mix-blend-mode: screen; }
+#smoke   { z-index: 3; mix-blend-mode: screen; }
+#gold    { z-index: 4; mix-blend-mode: screen; opacity: 0; }
+#grain   { z-index: 4; pointer-events: none; }
+
+#veil {
+  z-index: 6;
+  background: rgba(6, 6, 8, 0.35);
+  pointer-events: none;
+  transition: opacity 3s ease;
+}
+#mirror.awake #veil { opacity: 0; }
+
+/* ── rim: track, progress arc, ornaments ────────────────────── */
+
+#rim {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+
+#rim circle { fill: none; }
+
+#rim-track {
+  stroke: var(--bronze-dim);
+  stroke-width: 0.35;
+  opacity: 0.6;
+}
+
+#rim-arc {
+  stroke: var(--verdigris);
+  stroke-width: 0.5;
+  stroke-linecap: round;
+  stroke-dasharray: 304.7;      /* 2πr, r=48.5 */
+  stroke-dashoffset: 304.7;
+  opacity: 0;
+  transition: opacity 3s ease;
+}
+
+#rim.tracing #rim-arc { opacity: 0.35; }
+
+#ornaments {
+  stroke: var(--bronze);
+  stroke-width: 0.3;
+  opacity: 0.5;
+  transform: rotate(90deg);
+  transform-origin: 50% 50%;
+}
+
+/* ── shared UI ──────────────────────────────────────────────── */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  width: min(80vw, 26rem);
+  transition: opacity 3s ease, visibility 3s;
+}
+
+.panel.faded { opacity: 0; visibility: hidden; }
+.hidden { display: none !important; }
+
+.label-caps {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-variant: small-caps;
+  letter-spacing: 0.35em;
+  text-indent: 0.35em; /* re-center letterspaced text */
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color var(--slow) ease, border-color var(--slow) ease, opacity var(--slow) ease;
+}
+
+button:hover { color: var(--text); }
+
+input[type="text"], input[type="password"], textarea {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--bronze-dim);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1.15rem;
+  text-align: center;
+  padding: 0.4rem 0.2rem;
+  width: 100%;
+  outline: none;
+  transition: border-color var(--slow) ease;
+  caret-color: var(--bronze);
+}
+
+input:focus, textarea:focus { border-color: var(--bronze); }
+
+textarea { resize: none; line-height: 1.7; }
+
+::placeholder { color: var(--text-dim); opacity: 0.6; }
+
+/* ── threshold panel ────────────────────────────────────────── */
+
+#threshold-line {
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--text);
+  opacity: 0.85;
+  text-align: center;
+}
+
+#session-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+#duration-picker { display: flex; gap: 1.6rem; }
+
+.dur {
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: 1rem;
+  letter-spacing: 0.2em;
+  padding: 0.1rem 0.4rem;
+  border-bottom: 1px solid transparent;
+}
+
+.dur.selected { color: var(--bronze); border-bottom-color: var(--bronze-dim); }
+
+#oracle-toggle-row, #share-question-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--text-dim);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background var(--slow) ease, border-color var(--slow) ease;
+}
+
+input[type="checkbox"]:checked {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+#oracle-config {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  width: 70%;
+}
+
+#oracle-key { font-size: 0.85rem; letter-spacing: 0.15em; }
+
+#begin {
+  font-size: 1rem;
+  color: var(--text);
+  border: 1px solid var(--bronze-dim);
+  border-radius: 2rem;
+  padding: 0.55rem 2.4rem;
+  margin-top: 0.4rem;
+}
+
+#begin:hover { border-color: var(--bronze); }
+
+/* ── reading panel ──────────────────────────────────────────── */
+
+#reading-ui { opacity: 0; }
+#reading-ui.revealed { opacity: 1; }
+
+#reading-prompt {
+  font-size: 1.25rem;
+  font-style: italic;
+  text-align: center;
+}
+
+#oracle-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  text-align: center;
+  font-size: 1.2rem;
+  font-style: italic;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+#oracle-lines .line {
+  opacity: 0;
+  transition: opacity 2.5s ease;
+}
+
+#oracle-lines .line.lit { opacity: 0.9; }
+
+#reading-actions { display: flex; gap: 2.4rem; margin-top: 0.3rem; }
+
+/* ── grimoire ───────────────────────────────────────────────── */
+
+#grimoire-btn {
+  position: fixed;
+  bottom: 1.4rem;
+  right: 1.6rem;
+  font-size: 1rem;
+  color: var(--bronze-dim);
+  letter-spacing: 0;
+  text-indent: 0;
+  transition: color var(--slow) ease, opacity 3s ease;
+}
+
+#grimoire-btn:hover { color: var(--bronze); }
+#grimoire-btn.faded { opacity: 0; pointer-events: none; }
+
+#grimoire {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.96);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 1rem 2rem;
+  gap: 2rem;
+}
+
+#grimoire-title { font-size: 1rem; color: var(--bronze); }
+
+#grimoire-scroll {
+  overflow-y: auto;
+  max-width: 34rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.8rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--bronze-dim) transparent;
+}
+
+.entry {
+  width: 100%;
+  border-top: 1px solid var(--bronze-dim);
+  padding-top: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.entry .meta {
+  font-size: 0.75rem;
+  font-variant: small-caps;
+  letter-spacing: 0.25em;
+  color: var(--text-dim);
+  display: flex;
+  justify-content: space-between;
+}
+
+.entry .q { font-style: italic; font-size: 1.05rem; }
+.entry .a { font-size: 1rem; line-height: 1.6; color: var(--text); opacity: 0.85; white-space: pre-wrap; }
+.entry .a.oracle { color: var(--gold); opacity: 0.75; }
+
+#grimoire-empty { font-style: italic; color: var(--text-dim); }

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Mirror</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%230a0a0c' stroke='%236e5b3e' stroke-width='1.5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main id="stage">
+
+  <div id="mirror-wrap">
+    <div id="mirror">
+      <video id="surface" src="assets/surface.mp4" muted playsinline preload="auto"></video>
+      <video id="ink"     src="assets/ink.mp4"     muted playsinline preload="auto"></video>
+      <video id="smoke"   src="assets/smoke.mp4"   muted playsinline preload="auto"></video>
+      <video id="gold"    src="assets/gold.mp4"    muted playsinline preload="auto"></video>
+      <canvas id="grain"></canvas>
+      <div id="veil"></div>
+    </div>
+
+    <svg id="rim" viewBox="0 0 100 100" aria-hidden="true">
+      <circle id="rim-track" cx="50" cy="50" r="48.5"></circle>
+      <circle id="rim-arc"   cx="50" cy="50" r="48.5"></circle>
+      <!-- cardinal ornaments -->
+      <g id="ornaments" fill="none" stroke-linecap="round">
+        <path d="M 50 -0.8 L 50 3.2 M 47.8 1.2 L 52.2 1.2"></path>
+        <path d="M 50 100.8 L 50 96.8 M 47.8 98.8 L 52.2 98.8"></path>
+        <path d="M -0.8 50 L 3.2 50 M 1.2 47.8 L 1.2 52.2"></path>
+        <path d="M 100.8 50 L 96.8 50 M 98.8 47.8 L 98.8 52.2"></path>
+      </g>
+    </svg>
+  </div>
+
+  <div id="below">
+  <!-- threshold / pre-session -->
+  <section id="ritual-ui" class="panel">
+    <p id="threshold-line">The mirror is dark. Bring it a question.</p>
+    <input id="question" type="text" autocomplete="off" spellcheck="false"
+           aria-label="Your question" maxlength="200">
+    <div id="session-options">
+      <div id="duration-picker" role="radiogroup" aria-label="Session length">
+        <button class="dur" data-secs="60">I</button>
+        <button class="dur selected" data-secs="90">II</button>
+        <button class="dur" data-secs="180">III</button>
+      </div>
+      <label id="oracle-toggle-row">
+        <input type="checkbox" id="oracle-toggle">
+        <span class="label-caps">the mirror speaks</span>
+      </label>
+      <div id="oracle-config" class="hidden">
+        <input id="oracle-key" type="password" placeholder="key"
+               autocomplete="off" aria-label="Anthropic API key">
+        <label id="share-question-row">
+          <input type="checkbox" id="share-question" checked>
+          <span class="label-caps">let it hear the question</span>
+        </label>
+      </div>
+    </div>
+    <button id="begin" class="label-caps">gaze</button>
+  </section>
+
+  <!-- post-session reading -->
+  <section id="reading-ui" class="panel hidden">
+    <p id="reading-prompt">What did you see?</p>
+    <div id="oracle-lines" class="hidden"></div>
+    <textarea id="seen" rows="3" spellcheck="false" aria-label="What you saw"></textarea>
+    <div id="reading-actions">
+      <button id="keep" class="label-caps">keep</button>
+      <button id="release" class="label-caps">release</button>
+    </div>
+  </section>
+  </div>
+
+  <!-- grimoire -->
+  <button id="grimoire-btn" class="label-caps" aria-label="Open grimoire" title="Grimoire">✦</button>
+  <section id="grimoire" class="hidden">
+    <div id="grimoire-scroll">
+      <p class="label-caps" id="grimoire-title">grimoire</p>
+      <div id="grimoire-entries"></div>
+    </div>
+    <button id="grimoire-close" class="label-caps">close</button>
+  </section>
+
+</main>
+
+<script src="mirror.js"></script>
+<script src="oracle.js"></script>
+<script src="session.js"></script>
+</body>
+</html>
